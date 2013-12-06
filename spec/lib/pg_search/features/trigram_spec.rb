@@ -40,12 +40,12 @@ describe PgSearch::Features::Trigram do
 
     context 'when a threshold is specified' do
       let(:options) do
-        { threshold: 0.5 }
+        { threshold: 0.2 }
       end
 
-      it 'uses a minimum similarity expression instead of the "%" operator' do
+      it 'uses the "<->" operator instead of the "%" operator' do
         expect(feature.conditions.to_sql).to eq(
-          "(similarity((#{coalesced_columns}), '#{query}') >= 0.5)"
+          "(((#{coalesced_columns}) <-> '#{query}') <= 0.8)"
         )
       end
     end
@@ -54,7 +54,7 @@ describe PgSearch::Features::Trigram do
 
   describe '#rank' do
     it 'returns an expression using the similarity() function' do
-      expect(feature.rank.to_sql).to eq("(similarity((#{coalesced_columns}), '#{query}'))")
+      expect(feature.rank.to_sql).to eq("(1 - ((#{coalesced_columns}) <-> '#{query}'))")
     end
   end
 end

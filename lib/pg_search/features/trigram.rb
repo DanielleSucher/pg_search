@@ -4,7 +4,7 @@ module PgSearch
       def conditions
         if options[:threshold]
           Arel::Nodes::Grouping.new(
-            similarity.gteq(options[:threshold])
+            distance.lteq(1 - options[:threshold])
           )
         else
           Arel::Nodes::Grouping.new(
@@ -14,18 +14,16 @@ module PgSearch
       end
 
       def rank
-        Arel::Nodes::Grouping.new(similarity)
+        Arel::Nodes::Grouping.new(
+          Arel::Nodes::InfixOperation.new("-", 1, distance)
+        )
       end
 
       private
 
-      def similarity
-        Arel::Nodes::NamedFunction.new(
-          "similarity",
-          [
-            normalized_document,
-            normalized_query
-          ]
+      def distance
+        Arel::Nodes::Grouping.new(
+          Arel::Nodes::InfixOperation.new("<->", normalized_document, normalized_query)
         )
       end
 
